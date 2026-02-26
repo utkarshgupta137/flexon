@@ -11,8 +11,50 @@ use crate::{
 };
 
 impl<'a, S: Source, C: Config> Parser<'a, S, C> {
+    /// Skips to the given path.
+    ///
+    /// This will return early as soon as it reaches the specified path.
+    /// If the JSON is invalid or path does not exist, returns error.
+    ///
+    /// # Example
+    /// ```
+    /// use flexon::Parser;
+    /// use serde::Deserialize;
+    ///
+    /// let src = r#"{"one": 1, two: 2}"#;
+    /// let mut parser = Parser::new(src);
+    ///
+    /// parser.skip_to(["two"])?;
+    /// println!("two is {}", u32::deserialize(&mut tmp)?);
+    ///
+    /// # Ok::<(), flexon::serde::Error>(())
+    /// ```
+    pub fn skip_to<E, P>(&mut self, p: P) -> Result<(), E>
+    where
+        E: ErrorBuilder,
+        P: IntoIterator,
+        P::Item: JsonPointer,
+    {
+        self._skip_to(p)?;
+        self.dec();
+        Ok(())
+    }
+
+    /// Skips to the given path without validation.
+    ///
+    /// Same as [`Parser::skip_to`] but if the JSON is invalid or
+    /// the path does not exist, then there is no guarantee of this function.
+    pub unsafe fn skip_to_unchecked<P>(&mut self, p: P)
+    where
+        P: IntoIterator,
+        P::Item: JsonPointer,
+    {
+        self._skip_to_unchecked(p);
+        self.dec();
+    }
+
     #[inline(always)]
-    pub(crate) fn skip_to<E, P>(&mut self, p: P) -> Result<u8, E>
+    pub(crate) fn _skip_to<E, P>(&mut self, p: P) -> Result<u8, E>
     where
         E: ErrorBuilder,
         P: IntoIterator,
@@ -161,7 +203,7 @@ impl<'a, S: Source, C: Config> Parser<'a, S, C> {
     }
 
     #[inline(always)]
-    pub(crate) unsafe fn skip_to_unchecked<P>(&mut self, p: P) -> u8
+    pub(crate) unsafe fn _skip_to_unchecked<P>(&mut self, p: P) -> u8
     where
         P: IntoIterator,
         P::Item: JsonPointer,

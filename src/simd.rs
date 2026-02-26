@@ -371,7 +371,14 @@ impl<S: Source, C: Config> Parser<'_, S, C> {
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "sse2")]
     unsafe fn str_sse2(&mut self) -> bool {
-        if S::NULL_PADDED || likely(self.idx() + 16 < self.src.len()) {
+        // The parser starts its index from usize::MAX.
+        //
+        // When deserializing, the index will always be 0 at minimum for this function
+        // as the parser doesn't call it unless the it comes across '"'.
+        //
+        // However, during serialization, the starting index will always be usize::MAX.
+        // So we use wrapping_add, which is safe in this context.
+        if S::NULL_PADDED || likely(self.idx().wrapping_add(16) < self.src.len()) {
             let chunk = _mm_loadu_si128(self.cur_ptr().add(1).cast());
             let mask = _mm_movemask_epi8(_mm_or_si128(
                 _mm_or_si128(
@@ -419,7 +426,8 @@ impl<S: Source, C: Config> Parser<'_, S, C> {
 
     #[inline]
     fn str_swar(&mut self) -> bool {
-        if S::NULL_PADDED || likely(self.idx() + 8 < self.src.len()) {
+        // refer to `str_sse2` for use of wrapping_add
+        if S::NULL_PADDED || likely(self.idx().wrapping_add(8) < self.src.len()) {
             const QUOTE: u64 = b'"' as u64 * ONES;
             const SLASH: u64 = b'\\' as u64 * ONES;
             const CTRL: u64 = 0x20 * ONES;
