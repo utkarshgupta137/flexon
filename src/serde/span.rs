@@ -8,7 +8,7 @@ use serde::{
     de::{self, DeserializeSeed, IntoDeserializer, SeqAccess},
 };
 
-use crate::{Parser, config::Config, serde::Error, source::Source, span::Span};
+use crate::{Parser, config::Config, serde::de::Error, source::Source, span::Span};
 
 pub const TOKEN: &str = "$flexon::Span";
 

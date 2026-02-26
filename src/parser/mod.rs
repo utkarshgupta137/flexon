@@ -205,7 +205,7 @@ impl<'a, S: Source, C: Config> Parser<'a, S, C> {
         }
 
         unsafe {
-            let char = self.skip_to(p)?;
+            let char = self._skip_to(p)?;
 
             if V::LAZY {
                 // source is non volatile
@@ -266,7 +266,7 @@ impl<'a, S: Source, C: Config> Parser<'a, S, C> {
             )
         }
 
-        let char = self.skip_to_unchecked(p);
+        let char = self._skip_to_unchecked(p);
 
         if V::LAZY {
             V::raw(from_raw_parts(self.cur_ptr(), self.src.len() - self.idx()))
